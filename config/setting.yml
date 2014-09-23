@@ -8,8 +8,10 @@ db:
 app:
   threads: 5 # 并行线程数
   retry_limit: 3 # 重试次数
-  #sleep_interval: 0.5
+  word_limit: 30 # 要爬取的关键词个数
   #word_limit: 100000 # 要爬取的关键词个数
+  title_top: 10 # 爬取top10的title信息
+  #sleep_interval: 0.5
   #title_top: 10 #
 
 server:

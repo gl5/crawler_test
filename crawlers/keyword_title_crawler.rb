@@ -20,7 +20,7 @@ class KeywordTitleCrawler
     response = ""
     # 重试次数
     retry_limit = Configs.get('app.retry_limit')
-    p "fetching title #{CGI::unescape(@keyword)} ..."
+    p "Thread[#{Thread.current[:id]}] fetching title #{CGI::unescape(@keyword)} ..."
     begin
       response = ""
       retry_limit -= 1
@@ -41,7 +41,7 @@ class KeywordTitleCrawler
         sleep(5)
         retry
       else
-        p "fetching keyword_title #{CGI::unescape(@keyword)} failed for #{e.message}"
+        p "Thread[#{Thread.current[:id]}] fetched keyword_title #{CGI::unescape(@keyword)} failed for #{e.message}"
         return
       end
     end
@@ -69,6 +69,7 @@ class KeywordTitleCrawler
       KeywordTitle.insert(keyword_id: kw_id, title: title, domain: domain)
       count += 1
     end
-
+  rescue => e
+    p "Thread[#{Thread.current[:id]}] parsed title #{CGI::unescape(@keyword)} failed for #{e.message}"
   end
 end
