@@ -1,0 +1,16 @@
+.DS_Store
+*.swp
+*.swo
+*.swn
+*.rb~
+*.db
+.sass-cache
+coverage/
+.yardoc/
+doc/
+tmp/
+tags
+log/*.*
+data/*
+
+.

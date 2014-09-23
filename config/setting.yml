@@ -1,0 +1,21 @@
+db:
+  host: '127.0.0.1'
+  user: 'root'
+  pass: 'root'
+  database: 'test'
+  #database: 'crawler'
+
+app:
+  threads: 5 # 并行线程数
+  retry_limit: 3 # 重试次数
+  #sleep_interval: 0.5
+  #word_limit: 100000 # 要爬取的关键词个数
+  #title_top: 10 #
+
+server:
+  qihu:
+    host: 'www.so.com'
+    port: 80
+  baidu:
+    host: 'www.baidu.com'
+    port: 80
