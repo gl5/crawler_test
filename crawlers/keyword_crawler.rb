@@ -50,16 +50,21 @@ class KeywordCrawler
 
     response.scan(keyword_pattern) do |match|
       kw = match.first
+      next unless kw and Keyword.filter({keyword: kw}).empty?
       crawled_kw_count = Keyword.count
       # 如果关键词数据库中没有相应的item，则将关键词存到数据库和工作队列
-      if kw and Keyword.filter({keyword: kw}).empty? and crawled_kw_count < Configs.get('app.word_limit')
+      if crawled_kw_count < Configs.get('app.word_limit')
         Keyword.insert(keyword: kw)
         @queue.push([:keyword, kw])
         p "Thread[#{Thread.current[:id]}] pushed to queue [:keyword, #{CGI::unescape(kw)}], queue.legth = #{@queue.length}"
         @queue.push([:title, kw])
         p "Thread[#{Thread.current[:id]}] pushed to queue [:title, #{CGI::unescape(kw)}], queue.legth = #{@queue.length}"
       else
-        Thread.list.count.times {@queue.push([:shutdown, 'nil'])}
+        Configs.get('app.threads').times do
+          @queue.push([:shutdown, 'nil'])
+          p "Thread[#{Thread.current[:id]}] pushed to queue [:shutdown, 'nil'], queue.legth = #{@queue.length}"
+        end
+        break
       end
     end
   rescue => e

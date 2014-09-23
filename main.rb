@@ -43,6 +43,10 @@ $thread_num.times do |thread_index|
 
       while $queue.length == 0
         sleep 1
+        # 如果所有的子线程都在等待，而队列内容为空，则退出整个程序
+        if $sleeping_threads == $thread_num and $queue.length == 0
+          Thread.exit
+        end
       end
 
       type = keyword = nil
