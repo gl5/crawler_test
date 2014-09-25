@@ -22,6 +22,7 @@ end
 Thread.current[:id] = 'M'
 # 工作队列
 $working_queue = Queue.new
+$working_queue_full = false
 # 缓冲队列，爬取的结果先放到缓冲队列，再由另外一个线程写到数据库
 $buffer_queue = Queue.new
 # 锁
@@ -78,12 +79,17 @@ end
 save_thread = Thread.new do
   loop do
     if $buffer_queue.length > 0
+      while $working_queue_full
+        type, hash = $buffer_queue.pop
+        KeywordTitle.insert(hash) if type == :title
+        Thread.exit if $buffer_queue.length == 0
+      end
       type, hash = $buffer_queue.pop
       if type == :title
         KeywordTitle.insert(hash)
       elsif Keyword.count >= Configs.get('app.word_limit')
         $thread_num.times { $working_queue << [:shutdown, 'nil'] }
-        Thread.exit
+        $working_queue_full = true
       elsif Keyword.filter(hash).empty?
         Keyword.insert(hash)
         $working_queue << [:keyword, hash[:keyword]]
