@@ -3,13 +3,12 @@
 
 require 'cgi'
 require './config'
-require './models/keyword'
 
 class KeywordCrawler
 
-  def initialize(keyword, queue)
+  def initialize(keyword, buffer_queue)
     @keyword = keyword
-    @queue = queue
+    @buffer_queue = buffer_queue
     # 奇虎360搜索，与建立socket连接
     @socket = TCPSocket.new(Configs.get('server.qihu.host'), Configs.get('server.qihu.port'))
   end
@@ -48,24 +47,11 @@ class KeywordCrawler
     #关键词正则
     keyword_pattern = /<th><a href=\"\/s\?q=(.+?)&src=related\" data-type=/
 
+    # 将抓取的结果放到buffer_queue中
     response.scan(keyword_pattern) do |match|
       kw = match.first
-      next unless kw and Keyword.filter({keyword: kw}).empty?
-      crawled_kw_count = Keyword.count
-      # 如果关键词数据库中没有相应的item，则将关键词存到数据库和工作队列
-      if crawled_kw_count < Configs.get('app.word_limit')
-        Keyword.insert(keyword: kw)
-        @queue.push([:keyword, kw])
-        p "Thread[#{Thread.current[:id]}] pushed to queue [:keyword, #{CGI::unescape(kw)}], queue.legth = #{@queue.length}"
-        @queue.push([:title, kw])
-        p "Thread[#{Thread.current[:id]}] pushed to queue [:title, #{CGI::unescape(kw)}], queue.legth = #{@queue.length}"
-      else
-        Configs.get('app.threads').times do
-          @queue.push([:shutdown, 'nil'])
-          p "Thread[#{Thread.current[:id]}] pushed to queue [:shutdown, 'nil'], queue.legth = #{@queue.length}"
-        end
-        break
-      end
+      next unless kw
+      @buffer_queue << [:keyword, {keyword: kw}]
     end
   rescue => e
     p "Thread[#{Thread.current[:id]}] parsed keyword #{CGI::unescape(@keyword)} failed for #{e.message}"

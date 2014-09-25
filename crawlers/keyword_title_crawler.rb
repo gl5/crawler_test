@@ -4,14 +4,12 @@
 require 'cgi'
 require 'uri'
 require './config'
-require './models/keyword'
-require './models/keyword_title'
 
 class KeywordTitleCrawler
 
-  def initialize(keyword, queue)
+  def initialize(keyword, buffer_queue)
     @keyword = keyword
-    @queue = queue
+    @buffer_queue = buffer_queue
     # 与百度搜索建立socket连接
     @socket = TCPSocket.new(Configs.get('server.baidu.host'), Configs.get('server.baidu.port'))
   end
@@ -41,7 +39,7 @@ class KeywordTitleCrawler
         sleep(5)
         retry
       else
-        p "Thread[#{Thread.current[:id]}] fetched keyword_title #{CGI::unescape(@keyword)} failed for #{e.message}"
+        p "Thread[#{Thread.current[:id]}] fetched title #{CGI::unescape(@keyword)} failed for #{e.message}"
         return
       end
     end
@@ -66,7 +64,7 @@ class KeywordTitleCrawler
       title = title.gsub("<em>", "").gsub("</em>", "").gsub(" ", "")
       title = CGI::escape(title)
       # save to database
-      KeywordTitle.insert(keyword_id: kw_id, title: title, domain: domain)
+      @buffer_queue << [:title, {keyword_id: kw_id, title: title, domain: domain}]
       count += 1
     end
   rescue => e
